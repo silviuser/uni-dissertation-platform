@@ -1,6 +1,7 @@
 import express from "express";
 import { createStudent, getStudents, getStudentById, getStudentByEmail } from "../dataAccess/StudentDA.js";
 import bcrypt from "bcryptjs";
+import { generateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -58,6 +59,38 @@ router.get("/:id", async (req, res) => {
 		return res.json(toPublicStudent(s));
 	} catch (err) {
 		return res.status(500).json({ message: "Eroare la obtinere student", error: err.message });
+	}
+});
+
+router.post("/login", async (req, res) => {
+	try {
+		const { email, password } = req.body;
+		if (!email || !password) {
+			return res.status(400).json({ message: "email și password sunt obligatorii" });
+		}
+
+		const student = await getStudentByEmail(email);
+		if (!student) {
+			return res.status(401).json({ message: "Email sau parolă incorectă" });
+		}
+
+		const isValidPassword = bcrypt.compareSync(password, student.password);
+		if (!isValidPassword) {
+			return res.status(401).json({ message: "Email sau parolă incorectă" });
+		}
+
+		const token = generateToken({ 
+			id: student.id, 
+			email: student.email, 
+			role: "STUDENT" 
+		});
+
+		return res.json({ 
+			token, 
+			user: toPublicStudent(student) 
+		});
+	} catch (err) {
+		return res.status(500).json({ message: "Eroare la autentificare", error: err.message });
 	}
 });
 

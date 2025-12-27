@@ -7,6 +7,7 @@ import {
   findOverlappingSessions,
   updateSession,
 } from "../dataAccess/SessionDA.js";
+import { authenticate, requireProfessor } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -16,11 +17,16 @@ function toPublicSession(s) {
   return { id, professorId, description, startTime, endTime, maxSpots };
 }
 
-router.post("/", async (req, res) => {
+router.post("/", authenticate, requireProfessor, async (req, res) => {
   try {
     const { professorId, description, startTime, endTime, maxSpots } = req.body;
     if (!professorId || !startTime || !endTime || !maxSpots) {
       return res.status(400).json({ message: "professorId, startTime, endTime, maxSpots sunt obligatorii" });
+    }
+
+    // Verifică dacă profesorul logat creează sesiune pentru el însuși
+    if (professorId !== req.user.id) {
+      return res.status(403).json({ message: "Nu poți crea sesiuni pentru alți profesori" });
     }
 
     const startDate = new Date(startTime);
@@ -70,9 +76,20 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", authenticate, requireProfessor, async (req, res) => {
   try {
     const { description, startTime, endTime, maxSpots } = req.body;
+    
+    // Verifică dacă sesiunea aparține profesorului logat
+    const existingSession = await getSessionById(req.params.id);
+    if (!existingSession) {
+      return res.status(404).json({ message: "Sesiune inexistentă" });
+    }
+    
+    if (existingSession.professorId !== req.user.id) {
+      return res.status(403).json({ message: "Nu poți modifica sesiunile altor profesori" });
+    }
+
     const updates = {};
     if (description !== undefined) updates.description = description;
     if (startTime !== undefined) updates.startTime = new Date(startTime);

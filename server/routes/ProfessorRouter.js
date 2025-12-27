@@ -1,6 +1,7 @@
 import express from "express";
 import { createProfessor, getProfessors, getProfessorById, getProfessorByEmail } from "../dataAccess/ProfessorDA.js";
 import bcrypt from "bcryptjs";
+import { generateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -58,6 +59,38 @@ router.get("/:id", async (req, res) => {
     return res.json(toPublicProfessor(p));
   } catch (err) {
     return res.status(500).json({ message: "Eroare la obtinere profesor", error: err.message });
+  }
+});
+
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "email și password sunt obligatorii" });
+    }
+
+    const professor = await getProfessorByEmail(email);
+    if (!professor) {
+      return res.status(401).json({ message: "Email sau parolă incorectă" });
+    }
+
+    const isValidPassword = bcrypt.compareSync(password, professor.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ message: "Email sau parolă incorectă" });
+    }
+
+    const token = generateToken({ 
+      id: professor.id, 
+      email: professor.email, 
+      role: "PROFESSOR" 
+    });
+
+    return res.json({ 
+      token, 
+      user: toPublicProfessor(professor) 
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Eroare la autentificare", error: err.message });
   }
 });
 
