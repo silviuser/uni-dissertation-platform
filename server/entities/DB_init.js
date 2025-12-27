@@ -5,6 +5,7 @@ import Student from "./Student.js";
 import Professor from "./Professor.js";
 import Request from "./Request.js";
 import Session from "./Session.js";
+import UniversitySession from "./UniversitySession.js";
 
 env.config();
 
@@ -36,6 +37,9 @@ function FK_Config() {
 
     Student.hasMany(Request, { foreignKey: "studentId", as: "requests" });
     Request.belongsTo(Student, { foreignKey: "studentId", as: "student" });
+
+    UniversitySession.hasMany(Session, { foreignKey: "universitySessionId", as: "professorSessions" });
+    Session.belongsTo(UniversitySession, { foreignKey: "universitySessionId", as: "universitySession" });
 }
 
 function DB_Init(){

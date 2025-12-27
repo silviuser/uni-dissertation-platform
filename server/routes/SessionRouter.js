@@ -19,15 +19,17 @@ function toPublicSession(s) {
 
 router.post("/", authenticate, requireProfessor, async (req, res) => {
   try {
-    const { professorId, description, startTime, endTime, maxSpots } = req.body;
-    if (!professorId || !startTime || !endTime || !maxSpots) {
-      return res.status(400).json({ message: "professorId, startTime, endTime, maxSpots sunt obligatorii" });
+    const { professorId, description, startTime, endTime, maxSpots, universitySessionId } = req.body;
+
+    if (!professorId || !startTime || !endTime || !maxSpots || !universitySessionId) {
+      return res.status(400).json({ message: "professorId, startTime, endTime, maxSpots, universitySessionId sunt obligatorii" });
     }
 
     // Verifică dacă profesorul logat creează sesiune pentru el însuși
     if (professorId !== req.user.id) {
       return res.status(403).json({ message: "Nu poți crea sesiuni pentru alți profesori" });
     }
+    
 
     const startDate = new Date(startTime);
     const endDate = new Date(endTime);

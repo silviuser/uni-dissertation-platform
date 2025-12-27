@@ -7,6 +7,7 @@ import ProfessorRouter from './routes/ProfessorRouter.js';
 import RequestRouter from './routes/RequestRouter.js';
 import SessionRouter from './routes/SessionRouter.js';
 import AuthRouter from './routes/AuthRouter.js';
+import UniversitySessionRouter from './routes/UniversitySessionRouter.js';
 
 env.config();
 
@@ -23,6 +24,7 @@ app.use('/api/students', StudentRouter);
 app.use('/api/professors', ProfessorRouter);
 app.use('/api/requests', RequestRouter);
 app.use('/api/sessions', SessionRouter);
+app.use('/api/university-sessions', UniversitySessionRouter);
 
 let PORT = process.env.PORT || 9000;
 

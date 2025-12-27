@@ -48,7 +48,17 @@ const Session = db.define("Session", {
 			min: 1,
 		},
 	},
-}, {
+	universitySessionId: {
+        type: Sequelize.UUID,
+        allowNull: false, // O sesiune trebuie obligatoriu să aparțină unei sesiuni universitare
+        references: {
+            model: "UniversitySessions",
+            key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
+    }
+	}, {
 	tableName: "Sessions",
 	timestamps: false,
 	indexes: [
