@@ -1,0 +1,64 @@
+import express from "express";
+import { createProfessor, getProfessors, getProfessorById, getProfessorByEmail } from "../dataAccess/ProfessorDA.js";
+import bcrypt from "bcryptjs";
+
+const router = express.Router();
+
+function toPublicProfessor(p) {
+  if (!p) return null;
+  const { id, email, fullName, department, createdAt } = p;
+  return { id, email, fullName, department, createdAt };
+}
+
+router.post("/", async (req, res) => {
+  try {
+    const { email, password, fullName, department } = req.body;
+    if (!email || !password || !fullName) {
+      return res.status(400).json({ message: "email, password, fullName sunt obligatorii" });
+    }
+
+    const existing = await getProfessorByEmail(email);
+    if (existing) {
+      return res.status(409).json({ message: "Email deja folosit" });
+    }
+
+    const hash = bcrypt.hashSync(password, 10);
+    const created = await createProfessor({ email, password: hash, fullName, department });
+    return res.status(201).json(toPublicProfessor(created));
+  } catch (err) {
+    return res.status(500).json({ message: "Eroare la creare profesor", error: err.message });
+  }
+});
+
+router.get("/", async (_req, res) => {
+  try {
+    const list = await getProfessors();
+    return res.json(list.map(toPublicProfessor));
+  } catch (err) {
+    return res.status(500).json({ message: "Eroare la listare profesori", error: err.message });
+  }
+});
+
+router.get("/by-email", async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ message: "Parametrul email este necesar" });
+    const p = await getProfessorByEmail(String(email));
+    if (!p) return res.status(404).json({ message: "Profesor inexistent" });
+    return res.json(toPublicProfessor(p));
+  } catch (err) {
+    return res.status(500).json({ message: "Eroare la cautare dupa email", error: err.message });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const p = await getProfessorById(req.params.id);
+    if (!p) return res.status(404).json({ message: "Profesor inexistent" });
+    return res.json(toPublicProfessor(p));
+  } catch (err) {
+    return res.status(500).json({ message: "Eroare la obtinere profesor", error: err.message });
+  }
+});
+
+export default router;
