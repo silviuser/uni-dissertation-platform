@@ -87,6 +87,7 @@ router.post("/login", async (req, res) => {
 
 		return res.json({ 
 			token, 
+			role: "STUDENT",
 			user: toPublicStudent(student) 
 		});
 	} catch (err) {

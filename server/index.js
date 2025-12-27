@@ -6,6 +6,7 @@ import StudentRouter from './routes/StudentRouter.js';
 import ProfessorRouter from './routes/ProfessorRouter.js';
 import RequestRouter from './routes/RequestRouter.js';
 import SessionRouter from './routes/SessionRouter.js';
+import AuthRouter from './routes/AuthRouter.js';
 
 env.config();
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 DB_Init();
 
 app.use('/api', createDBRouter);
+app.use('/api', AuthRouter); // /api/login
 app.use('/api/students', StudentRouter);
 app.use('/api/professors', ProfessorRouter);
 app.use('/api/requests', RequestRouter);

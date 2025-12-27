@@ -1,24 +1,37 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import StudentDashboard from './pages/StudentDashboard';
+import ProfessorDashboard from './pages/ProfessorDashboard';
+import authService from './services/authService';
 
 function App() {
+
+  const [user, setUser] = useState(authService.getCurrentUser());
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" />} />
+          
+          <Route 
+            path="/login" 
+            element={<Login onLogin={(userData) => setUser(userData)} />} 
+          />
+          
+          <Route 
+            path="/student" 
+            element={user && user.role === 'STUDENT' ? <StudentDashboard user={user} /> : <Navigate to="/login" />} 
+          />
+          
+          <Route 
+            path="/professor" 
+            element={user && user.role === 'PROFESSOR' ? <ProfessorDashboard user={user} /> : <Navigate to="/login" />} 
+          />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 
