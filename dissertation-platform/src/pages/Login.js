@@ -37,9 +37,9 @@ const Login = ({ onLogin }) => {
   const handleStayLoggedIn = () => {
     const currentUser = authService.getCurrentUser();
     if (currentUser && currentUser.role === 'PROFESSOR') {
-      navigate('/professors');
+      navigate('/professor');
     } else if (currentUser && currentUser.role === 'STUDENT') {
-      navigate('/students');
+      navigate('/student');
     }
   };
 
@@ -69,9 +69,9 @@ const Login = ({ onLogin }) => {
 
       // Redirecționăm utilizatorul în funcție de rol
       if (data.role === 'PROFESSOR') {
-        navigate('/professors');
+        navigate('/professor');
       } else {
-        navigate('/students');
+        navigate('/student');
       }
     } catch (err) {
       setError(err.message);
