@@ -55,6 +55,10 @@ const Request = db.define("Request", {
 			},
 		},
 	},
+	applicationMessage: {
+		type: Sequelize.TEXT,
+		allowNull: true,
+	},
 	teacherFile: {
 		type: Sequelize.STRING(255),
 		allowNull: true,

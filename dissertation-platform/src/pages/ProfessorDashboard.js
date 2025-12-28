@@ -1,24 +1,108 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiService from '../services/apiService';
+import authService from '../services/authService';
+import AppHeader from '../components/layout/AppHeader';
+import Sidebar from '../components/layout/Sidebar';
 
-const ProfessorDashboard = ({ user, onLogout }) => {
+const ProfessorDashboard = ({ user }) => {
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [sessions, setSessions] = useState([]);
-  const [selectedSessionRequests, setSelectedSessionRequests] = useState(null); // null sau array
-  const [activeSessionId, setActiveSessionId] = useState(null); // ID-ul sesiunii expandate
+  const [selectedSessionRequests, setSelectedSessionRequests] = useState(null);
+  const [activeSessionId, setActiveSessionId] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [uploadingTeacherFile, setUploadingTeacherFile] = useState(null);
+  const [teacherFileMap, setTeacherFileMap] = useState({});
+
+  // Download handlers
+  const handleDownloadStudentFile = async (requestId) => {
+    try {
+      const url = apiService.downloadStudentFile(requestId);
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        alert('Failed to download file');
+        return;
+      }
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `student-request-${requestId.slice(0, 8)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Error downloading file');
+    }
+  };
+
+  const handleDownloadTeacherFile = async (requestId) => {
+    try {
+      const url = apiService.downloadTeacherFile(requestId);
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        alert('Failed to download file');
+        return;
+      }
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `teacher-signed-${requestId.slice(0, 8)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Error downloading file');
+    }
+  };
   
-  // Form state pentru creare sesiune
+  // Form state pentru criere sesiune
   const [newSession, setNewSession] = useState({
     startTime: '',
     endTime: '',
-    maxSpots: 5
+    maxSpots: 5,
+    universitySessionId: ''
   });
 
+  const [universitySessions, setUniversitySessions] = useState([]);
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     loadSessions();
+    loadUniversitySessions();
   }, []);
+
+  const loadUniversitySessions = async () => {
+    try {
+      const data = await apiService.getUniversitySessions();
+      setUniversitySessions(data);
+    } catch (err) {
+      console.error("Eroare la încărcare sesiuni universitare", err);
+    }
+  };
+
+  const onLogout = () => {
+    authService.logout();
+    navigate('/login');
+  };
 
   const loadSessions = async () => {
     try {
@@ -68,12 +152,11 @@ const ProfessorDashboard = ({ user, onLogout }) => {
     let reason = null;
     if (status === 'REJECTED') {
       reason = prompt("Motivul respingerii (obligatoriu):");
-      if (!reason) return; // Dacă dă cancel, nu facem nimic
+      if (!reason) return;
     }
 
     try {
       await apiService.updateRequestStatus(requestId, status, reason);
-      // Reîncărcăm cererile pentru a vedea statusul actualizat
       const updatedRequests = await apiService.getSessionRequests(activeSessionId);
       setSelectedSessionRequests(updatedRequests);
       setMessage({ type: 'success', text: `Cerere ${status === 'APPROVED' ? 'aprobată' : 'respinsă'}!` });
@@ -82,15 +165,46 @@ const ProfessorDashboard = ({ user, onLogout }) => {
     }
   };
 
+  const handleUploadTeacherFile = async (requestId) => {
+    const fileInput = document.getElementById(`teacher-file-${requestId}`);
+    if (!fileInput?.files[0]) {
+      alert('Selectează un fișier PDF');
+      return;
+    }
+
+    const file = fileInput.files[0];
+    if (file.type !== 'application/pdf') {
+      alert('Doar fișierele PDF sunt acceptate');
+      return;
+    }
+
+    try {
+      setUploadingTeacherFile(requestId);
+      const formData = new FormData();
+      formData.append('file', file);
+      await apiService.uploadTeacherFile(requestId, formData);
+      
+      const updatedRequests = await apiService.getSessionRequests(activeSessionId);
+      setSelectedSessionRequests(updatedRequests);
+      setTeacherFileMap(prev => ({ ...prev, [requestId]: null }));
+      setMessage({ type: 'success', text: 'Fișierul semnat a fost încărcat cu succes!' });
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Eroare la upload';
+      setMessage({ type: 'error', text: message });
+    } finally {
+      setUploadingTeacherFile(null);
+    }
+  };
+
   return (
-    <div style={{ padding: '2rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h2>👨‍🏫 Panou Profesor</h2>
-          <p>Prof. <strong>{user.fullName || user.email}</strong></p>
-        </div>
-        <button onClick={onLogout} style={styles.logoutBtn}>Deconectare</button>
-      </header>
+    <div>
+      <AppHeader onMenuClick={() => setMenuOpen(!menuOpen)} title="Professor Dashboard" user={user} />
+
+      <main className="dashboard-shell">
+        <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} user={user} onLogout={onLogout} />
+        <section className="content">
+          <h1 className="login-title">Welcome back, {user.fullName?.split(' ')[0] || 'Professor'}</h1>
+          <p className="login-subtitle">Manage your thesis sessions and review student applications.</p>
 
       {/* Mesaje */}
       {message.text && (
@@ -150,6 +264,20 @@ const ProfessorDashboard = ({ user, onLogout }) => {
                 style={styles.input}
               />
             </div>
+            <div style={styles.inputGroup}>
+              <label>University Session:</label>
+              <select 
+                required
+                value={newSession.universitySessionId}
+                onChange={e => setNewSession({...newSession, universitySessionId: e.target.value})}
+                style={styles.input}
+              >
+                <option value="">Select University Session</option>
+                {universitySessions.map(us => (
+                  <option key={us.id} value={us.id}>{us.name}</option>
+                ))}
+              </select>
+            </div>
             <button type="submit" style={styles.successBtn}>Salvează Sesiunea</button>
           </form>
         </div>
@@ -179,22 +307,78 @@ const ProfessorDashboard = ({ user, onLogout }) => {
                 <div style={{ marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '10px' }}>
                   <h5>Cereri Studenți ({selectedSessionRequests.length})</h5>
                   {selectedSessionRequests.length === 0 ? <p style={{ fontSize: '0.9rem' }}>Nicio cerere.</p> : (
-                    <ul style={{ listStyle: 'none', padding: 0 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {selectedSessionRequests.map(req => (
-                        <li key={req.id} style={styles.requestItem}>
-                          <div>
-                            <strong>Student ID:</strong> {req.studentId} <br/>
+                        <div key={req.id} style={{ ...styles.requestCard, backgroundColor: req.status === 'APPROVED' ? '#f0f8ff' : '#fff' }}>
+                          <div style={{ marginBottom: '8px' }}>
+                            <strong>Student ID:</strong> {req.studentId.slice(0, 8)}... <br/>
                             <span style={getStatusStyle(req.status)}>{req.status}</span>
                           </div>
+
                           {req.status === 'PENDING' && (
-                            <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
-                              <button onClick={() => handleRequestAction(req.id, 'APPROVED')} style={styles.smallBtnApprove}>✓</button>
-                              <button onClick={() => handleRequestAction(req.id, 'REJECTED')} style={styles.smallBtnReject}>X</button>
+                            <div style={{ display: 'flex', gap: '5px', marginBottom: '8px' }}>
+                              <button onClick={() => handleRequestAction(req.id, 'APPROVED')} style={styles.smallBtnApprove}>✓ Aprobă</button>
+                              <button onClick={() => handleRequestAction(req.id, 'REJECTED')} style={styles.smallBtnReject}>X Respinge</button>
                             </div>
                           )}
-                        </li>
+
+                          {req.status === 'APPROVED' && (
+                            <div style={{ borderTop: '1px solid #ddd', paddingTop: '8px', marginTop: '8px' }}>
+                              {req.studentFile ? (
+                                <div style={{ marginBottom: '8px' }}>
+                                  <strong>📄 Cerere Student:</strong>
+                                  <div style={{ marginTop: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <button onClick={() => handleDownloadStudentFile(req.id)} style={styles.downloadLink}>
+                                      Descarcă
+                                    </button>
+                                    <span style={{ fontSize: '12px', color: '#666' }}>Încarcată de student</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ fontSize: '12px', color: '#dc3545', marginBottom: '8px' }}>
+                                  ⏳ În așteptare ca studentul să încarce cererea...
+                                </div>
+                              )}
+
+                              {req.studentFile && (
+                                <div style={{ marginTop: '12px', borderTop: '1px solid #ddd', paddingTop: '8px' }}>
+                                  {req.teacherFile ? (
+                                    <div>
+                                      <strong>✓ Fișier Semnat Încărcat</strong>
+                                      <div style={{ marginTop: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                        <button onClick={() => handleDownloadTeacherFile(req.id)} style={styles.downloadLink}>
+                                          Descarcă Copie
+                                        </button>
+                                        <span style={{ fontSize: '12px', color: '#28a745' }}>✓ Semnat</span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <strong>Încarc Cererea Semnată:</strong>
+                                      <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                                        <input
+                                          id={`teacher-file-${req.id}`}
+                                          type="file"
+                                          accept="application/pdf"
+                                          style={{ fontSize: '12px', flex: 1, minWidth: '150px' }}
+                                        />
+                                        <button
+                                          onClick={() => handleUploadTeacherFile(req.id)}
+                                          disabled={uploadingTeacherFile === req.id}
+                                          style={styles.uploadBtn}
+                                        >
+                                          {uploadingTeacherFile === req.id ? 'Se încarcă...' : 'Încarc'}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   )}
                 </div>
               )}
@@ -202,6 +386,8 @@ const ProfessorDashboard = ({ user, onLogout }) => {
           ))}
         </div>
       )}
+        </section>
+      </main>
     </div>
   );
 };
@@ -220,9 +406,11 @@ const styles = {
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' },
   card: { padding: '15px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
   
-  requestItem: { backgroundColor: '#f1f1f1', padding: '8px', borderRadius: '4px', marginBottom: '8px', fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  smallBtnApprove: { backgroundColor: '#28a745', color: 'white', border: 'none', width: '25px', height: '25px', borderRadius: '50%', cursor: 'pointer' },
-  smallBtnReject: { backgroundColor: '#dc3545', color: 'white', border: 'none', width: '25px', height: '25px', borderRadius: '50%', cursor: 'pointer' }
+  requestCard: { backgroundColor: '#f1f1f1', padding: '10px', borderRadius: '4px', fontSize: '0.9rem', border: '1px solid #ddd' },
+  smallBtnApprove: { backgroundColor: '#28a745', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' },
+  smallBtnReject: { backgroundColor: '#dc3545', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' },
+  downloadLink: { padding: '4px 8px', backgroundColor: '#0066cc', color: 'white', textDecoration: 'none', borderRadius: '4px', fontSize: '12px' },
+  uploadBtn: { backgroundColor: '#28a745', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }
 };
 
 const getStatusStyle = (status) => {

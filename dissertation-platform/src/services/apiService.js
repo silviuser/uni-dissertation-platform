@@ -23,10 +23,11 @@ const getSessions = async () => {
 };
 
 // --- API Cereri ---
-const createRequest = async (studentId, sessionId) => {
+const createRequest = async (studentId, sessionId, applicationMessage = '') => {
   const response = await axios.post(`${API_URL}/requests`, {
     studentId,
-    sessionId
+    sessionId,
+    applicationMessage
   });
   return response.data;
 };
@@ -75,22 +76,78 @@ const updateRequestStatus = async (requestId, status, rejectionReason = null) =>
   return response.data;
 };
 
+// funcție nouă pentru ștergere
+const deleteRequest = async (requestId) => {
+  const response = await axios.delete(`${API_URL}/requests/${requestId}`);
+  return response.data;
+};
+
+const uploadSignedRequest = async (requestId, formData) => {
+  const response = await axios.post(`${API_URL}/requests/${requestId}/upload-student-file`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+const deleteSignedFile = async (requestId) => {
+  const response = await axios.delete(`${API_URL}/requests/${requestId}/student-file`);
+  return response.data;
+};
+
+const uploadTeacherFile = async (requestId, formData) => {
+  const response = await axios.post(`${API_URL}/requests/${requestId}/upload-teacher-file`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+const downloadStudentFile = (requestId) => {
+  return `${API_URL}/requests/${requestId}/download-student-file`;
+};
+
+const downloadTeacherFile = (requestId) => {
+  return `${API_URL}/requests/${requestId}/download-teacher-file`;
+};
+
 // --- API Sesiuni Universitare ---
 const getUniversitySessions = async () => {
   const response = await axios.get(`${API_URL}/university-sessions`);
   return response.data;
 };
 
+// --- API Student Profile ---
+const getStudentById = async (studentId) => {
+  const response = await axios.get(`${API_URL}/students/${studentId}`);
+  return response.data;
+};
+
+const updateStudentProfile = async (studentId, data) => {
+  const response = await axios.put(`${API_URL}/students/${studentId}`, data);
+  return response.data;
+};
+
 const apiService = {
   getSessions,
-  getProfessorSessions, // exportăm
-  createSession,        // exportăm
+  getProfessorSessions,
+  createSession,
   createRequest,
   getStudentRequests,
-  getSessionRequests,   // exportăm
-  updateRequestStatus,  // exportăm
+  getSessionRequests,
+  updateRequestStatus,
+  deleteRequest,
+  uploadSignedRequest,
+  deleteSignedFile,
+  uploadTeacherFile,
+  downloadStudentFile,
+  downloadTeacherFile,
   getProfessors,
-  getUniversitySessions // exportăm
+  getUniversitySessions,
+  getStudentById,
+  updateStudentProfile
 };
 
 export default apiService;

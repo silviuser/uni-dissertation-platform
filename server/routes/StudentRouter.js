@@ -1,7 +1,7 @@
 import express from "express";
-import { createStudent, getStudents, getStudentById, getStudentByEmail } from "../dataAccess/StudentDA.js";
+import { createStudent, getStudents, getStudentById, getStudentByEmail, updateStudent } from "../dataAccess/StudentDA.js";
 import bcrypt from "bcryptjs";
-import { generateToken } from "../middleware/auth.js";
+import { authenticate, requireStudent, generateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -59,6 +59,31 @@ router.get("/:id", async (req, res) => {
 		return res.json(toPublicStudent(s));
 	} catch (err) {
 		return res.status(500).json({ message: "Eroare la obtinere student", error: err.message });
+	}
+});
+
+// Update student profile (self-service)
+router.put("/:id", authenticate, requireStudent, async (req, res) => {
+	try {
+		const id = req.params.id;
+		// Ensure student updates only own profile
+		if (req.user.id !== id) {
+			return res.status(403).json({ message: "Nu poți edita profilul altui student" });
+		}
+
+		const { fullName, faculty, specialization, group } = req.body;
+		// Basic validation
+		const payload = {};
+		if (typeof fullName === "string" && fullName.trim()) payload.fullName = fullName.trim();
+		if (typeof faculty === "string" && faculty.trim()) payload.faculty = faculty.trim();
+		if (typeof specialization === "string" && specialization.trim()) payload.specialization = specialization.trim();
+		if (typeof group === "string" && group.trim()) payload.group = group.trim();
+
+		const updated = await updateStudent(id, payload);
+		if (!updated) return res.status(404).json({ message: "Student inexistent" });
+		return res.json(toPublicStudent(updated));
+	} catch (err) {
+		return res.status(500).json({ message: "Eroare la actualizare profil", error: err.message });
 	}
 });
 

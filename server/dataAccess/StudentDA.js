@@ -16,9 +16,26 @@ async function getStudentByEmail(email) {
     return Student.findOne({ where: { email } });
 }
 
+async function updateStudent(id, fields) {
+    const student = await Student.findByPk(id);
+    if (!student) return null;
+
+    // Only allow updating specific fields
+    const allowed = ["fullName", "faculty", "specialization", "group"];
+    for (const key of allowed) {
+        if (Object.prototype.hasOwnProperty.call(fields, key)) {
+            student[key] = fields[key];
+        }
+    }
+
+    await student.save();
+    return student;
+}
+
 export {
     createStudent,
     getStudents,
     getStudentById,
     getStudentByEmail,
+    updateStudent,
 };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import StudentDashboard from './pages/StudentDashboard';
+import StudentProfile from './pages/StudentProfile';
 import ProfessorDashboard from './pages/ProfessorDashboard';
 import authService from './services/authService';
 
@@ -23,6 +24,10 @@ function App() {
           <Route 
             path="/student" 
             element={user && user.role === 'STUDENT' ? <StudentDashboard user={user.user || user} /> : <Navigate to="/login" />} 
+          />
+          <Route 
+            path="/student/profile" 
+            element={user && user.role === 'STUDENT' ? <StudentProfile user={user.user || user} /> : <Navigate to="/login" />} 
           />
           
           <Route 

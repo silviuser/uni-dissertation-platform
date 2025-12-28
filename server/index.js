@@ -8,6 +8,8 @@ import RequestRouter from './routes/RequestRouter.js';
 import SessionRouter from './routes/SessionRouter.js';
 import AuthRouter from './routes/AuthRouter.js';
 import UniversitySessionRouter from './routes/UniversitySessionRouter.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 env.config();
 
@@ -16,8 +18,17 @@ let app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-DB_Init();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsPath = path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(uploadsPath));
 
+DB_Init();
+// Debug logging middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
 app.use('/api', createDBRouter);
 app.use('/api', AuthRouter); // /api/login
 app.use('/api/students', StudentRouter);

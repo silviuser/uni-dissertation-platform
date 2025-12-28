@@ -1,4 +1,7 @@
 import Request from "../entities/Request.js";
+import Session from "../entities/Session.js";
+import Professor from "../entities/Professor.js";
+import UniversitySession from "../entities/UniversitySession.js";
 
 async function createRequest(request) {
   return Request.create(request);
@@ -13,7 +16,28 @@ async function getRequestById(id) {
 }
 
 async function getRequestsByStudent(studentId) {
-  return Request.findAll({ where: { studentId } });
+  return Request.findAll({
+    where: { studentId },
+    include: [
+      {
+        model: Session,
+        as: 'session',
+        attributes: ['id', 'startTime', 'endTime'],
+        include: [
+          {
+            model: Professor,
+            as: 'professor',
+            attributes: ['id', 'fullName', 'department']
+          },
+          {
+            model: UniversitySession,
+            as: 'universitySession',
+            attributes: ['id', 'name']
+          }
+        ]
+      }
+    ]
+  });
 }
 
 async function getRequestsBySession(sessionId) {
@@ -27,6 +51,13 @@ async function updateRequest(id, updates) {
   return req.save();
 }
 
+async function deleteRequest(id) {
+  const req = await Request.findByPk(id);
+  if (!req) return null;
+  await req.destroy();
+  return req;
+}
+
 export {
   createRequest,
   getRequests,
@@ -34,4 +65,5 @@ export {
   getRequestsByStudent,
   getRequestsBySession,
   updateRequest,
+  deleteRequest,
 };
