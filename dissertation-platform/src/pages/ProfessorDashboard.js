@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { logoutUser } from '../store/authSlice';
 import apiService from '../services/apiService';
-import authService from '../services/authService';
 import AppHeader from '../components/layout/AppHeader';
 import Sidebar from '../components/layout/Sidebar';
 
 const ProfessorDashboard = ({ user }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [menuOpen, setMenuOpen] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [selectedSessionRequests, setSelectedSessionRequests] = useState(null);
@@ -100,7 +102,7 @@ const ProfessorDashboard = ({ user }) => {
   };
 
   const onLogout = () => {
-    authService.logout();
+    dispatch(logoutUser());
     navigate('/login');
   };
 

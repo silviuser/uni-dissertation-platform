@@ -1,5 +1,7 @@
 import axios from 'axios';
 import authService from './authService';
+import { store } from '../store/store';
+import { logoutUser, reset } from '../store/authSlice';
 
 const API_URL = "/api";
 
@@ -7,13 +9,35 @@ const API_URL = "/api";
 // Astfel nu trebuie să punem manual header-ul "Authorization" de fiecare dată
 axios.interceptors.request.use(
   config => {
+    // Prefer token din Redux; fallback la localStorage pentru bootstrap timpuriu
+    const state = store.getState?.();
+    const tokenFromStore = state?.auth?.token;
     const user = authService.getCurrentUser();
-    if (user && user.token) {
-      config.headers['Authorization'] = 'Bearer ' + user.token;
+    const token = tokenFromStore || user?.token;
+    if (token) {
+      config.headers['Authorization'] = 'Bearer ' + token;
     }
     return config;
   },
   error => Promise.reject(error)
+);
+
+// Logout automat pe 401/403
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401 || status === 403) {
+      try {
+        store.dispatch(logoutUser());
+        store.dispatch(reset());
+      } catch (_) {}
+      if (window.location.pathname !== '/login') {
+        window.location.replace('/login');
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 // --- API Sesiuni ---

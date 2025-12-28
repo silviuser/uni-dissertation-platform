@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { logoutUser } from '../store/authSlice';
 import apiService from '../services/apiService';
-import authService from '../services/authService';
 import AppHeader from '../components/layout/AppHeader';
 import Sidebar from '../components/layout/Sidebar';
 import StatusCards from '../components/student/StatusCards';
@@ -11,6 +12,7 @@ import ActiveApplicationSection from '../components/student/ActiveApplicationSec
 
 const StudentDashboard = ({ user }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [menuOpen, setMenuOpen] = useState(false);
   const [myRequests, setMyRequests] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -71,7 +73,7 @@ const StudentDashboard = ({ user }) => {
   const canApplyToMoreSessions = !hasApprovedRequest;
 
   const onLogout = () => {
-    authService.logout();
+    dispatch(logoutUser());
     navigate('/login');
   };
 

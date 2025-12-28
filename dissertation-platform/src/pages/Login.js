@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUser, reset, logoutUser } from '../store/authSlice';
 import authService from '../services/authService';
 import '../App.css';
 
-const Login = ({ onLogin }) => {
+const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     role: 'STUDENT'
   });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { user, isLoading, isError, isSuccess, message } = useSelector((state) => state.auth);
 
   const { email, password, role } = formData;
 
@@ -23,12 +27,20 @@ const Login = ({ onLogin }) => {
     }
   }, []);
 
-  const handleLogout = () => {
-    authService.logout();
-    setShowLogoutConfirm(false);
-    if (onLogin) {
-      onLogin(null);
+  useEffect(() => {
+    if (isError) {
+      setError(message || 'Login failed');
     }
+    if (isSuccess || user) {
+      if (user?.role === 'PROFESSOR') navigate('/professor');
+      else if (user?.role === 'STUDENT') navigate('/student');
+    }
+    dispatch(reset());
+  }, [user, isError, isSuccess, message, navigate, dispatch]);
+
+  const handleLogout = () => {
+    dispatch(logoutUser());
+    setShowLogoutConfirm(false);
   };
 
   const handleStayLoggedIn = () => {
@@ -54,24 +66,7 @@ const Login = ({ onLogin }) => {
   const onSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
-
-    try {
-      const data = await authService.login(email, password, role);
-      if (onLogin) {
-        onLogin(data);
-      }
-
-      if (data.role === 'PROFESSOR') {
-        navigate('/professor');
-      } else {
-        navigate('/student');
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    dispatch(loginUser({ email, password, role }));
   };
 
   if (showLogoutConfirm) {
@@ -158,8 +153,8 @@ const Login = ({ onLogin }) => {
               <a className="link subtle" href="#">Forgot password?</a>
             </div>
 
-            <button className="btn primary full" type="submit" disabled={loading}>
-              {loading ? 'Signing in...' : 'Log in'}
+            <button className="btn primary full" type="submit" disabled={isLoading}>
+              {isLoading ? 'Signing in...' : 'Log in'}
             </button>
           </form>
 
