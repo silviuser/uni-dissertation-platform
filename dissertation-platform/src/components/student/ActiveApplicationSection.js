@@ -53,39 +53,46 @@ const ActiveApplicationSection = ({
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-                {filteredSessions.map((s) => (
-                  <Card key={s.id}>
-                    <div className="title" style={{ marginBottom: 8 }}>
-                      {s.professor?.fullName || 'Unknown Professor'}
-                    </div>
-                    {s.professor?.department && (
-                      <div className="meta" style={{ marginBottom: 8 }}>
-                        {s.professor.department}
+                {filteredSessions.map((s) => {
+                  const availableSpots = s.availableSpots ?? 0;
+                  const isFull = availableSpots <= 0;
+                  const alreadyApplied = appliedSessionIds.includes(s.id);
+                  const isDisabled = alreadyApplied || isFull;
+                  
+                  return (
+                    <Card key={s.id} style={{ opacity: isFull ? 0.6 : 1 }}>
+                      <div className="title" style={{ marginBottom: 8 }}>
+                        {s.professor?.fullName || 'Unknown Professor'}
                       </div>
-                    )}
-                    <div className="meta" style={{ marginBottom: 4 }}>
-                      <strong>Application Period:</strong>
-                    </div>
-                    <div className="meta" style={{ marginBottom: 8 }}>
-                      {new Date(s.startTime).toLocaleString()} - {new Date(s.endTime).toLocaleString()}
-                    </div>
-                    {s.universitySession && (
-                      <div className="meta" style={{ marginBottom: 8 }}>
-                        <strong>University Session:</strong> {s.universitySession.name}
+                      {s.professor?.department && (
+                        <div className="meta" style={{ marginBottom: 8 }}>
+                          {s.professor.department}
+                        </div>
+                      )}
+                      <div className="meta" style={{ marginBottom: 4 }}>
+                        <strong>Application Period:</strong>
                       </div>
-                    )}
-                    <div className="meta" style={{ marginBottom: 12 }}>
-                      Available Spots: {s.maxSpots}
-                    </div>
-                    <Button
-                      onClick={() => onApplyClick(s)}
-                      disabled={appliedSessionIds.includes(s.id)}
-                      style={{ opacity: appliedSessionIds.includes(s.id) ? 0.6 : 1 }}
-                    >
-                      {appliedSessionIds.includes(s.id) ? 'Already Applied' : 'Apply'}
-                    </Button>
-                  </Card>
-                ))}
+                      <div className="meta" style={{ marginBottom: 8 }}>
+                        {new Date(s.startTime).toLocaleString()} - {new Date(s.endTime).toLocaleString()}
+                      </div>
+                      {s.universitySession && (
+                        <div className="meta" style={{ marginBottom: 8 }}>
+                          <strong>University Session:</strong> {s.universitySession.name}
+                        </div>
+                      )}
+                      <div className="meta" style={{ marginBottom: 12, color: isFull ? '#dc3545' : '#28a745', fontWeight: '600' }}>
+                        {isFull ? '🔴 Complet (0 locuri)' : `✓ ${availableSpots} ${availableSpots === 1 ? 'loc disponibil' : 'locuri disponibile'}`}
+                      </div>
+                      <Button
+                        onClick={() => onApplyClick(s)}
+                        disabled={isDisabled}
+                        style={{ opacity: isDisabled ? 0.6 : 1 }}
+                      >
+                        {alreadyApplied ? 'Already Applied' : isFull ? 'Full - No Spots' : 'Apply'}
+                      </Button>
+                    </Card>
+                  );
+                })}
                 {filteredSessions.length === 0 && (
                   <div className="meta">No sessions available for the selected university session.</div>
                 )}

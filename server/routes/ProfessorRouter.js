@@ -1,7 +1,7 @@
 import express from "express";
-import { createProfessor, getProfessors, getProfessorById, getProfessorByEmail } from "../dataAccess/ProfessorDA.js";
+import { createProfessor, getProfessors, getProfessorById, getProfessorByEmail, updateProfessor } from "../dataAccess/ProfessorDA.js";
 import bcrypt from "bcryptjs";
-import { generateToken } from "../middleware/auth.js";
+import { generateToken, authenticate, requireProfessor } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -59,6 +59,27 @@ router.get("/:id", async (req, res) => {
     return res.json(toPublicProfessor(p));
   } catch (err) {
     return res.status(500).json({ message: "Eroare la obtinere profesor", error: err.message });
+  }
+});
+
+router.put("/:id", authenticate, requireProfessor, async (req, res) => {
+  try {
+    if (req.params.id !== req.user.id) {
+      return res.status(403).json({ message: "Nu poți actualiza profil pentru alți profesori" });
+    }
+
+    const updated = await updateProfessor(req.params.id, {
+      fullName: req.body.fullName,
+      department: req.body.department
+    });
+
+    if (!updated) {
+      return res.status(404).json({ message: "Profesor inexistent" });
+    }
+
+    return res.json(toPublicProfessor(updated));
+  } catch (err) {
+    return res.status(500).json({ message: "Eroare la actualizare profil", error: err.message });
   }
 });
 

@@ -2,13 +2,39 @@ import Request from "../entities/Request.js";
 import Session from "../entities/Session.js";
 import Professor from "../entities/Professor.js";
 import UniversitySession from "../entities/UniversitySession.js";
+import Student from "../entities/Student.js";
 
 async function createRequest(request) {
   return Request.create(request);
 }
 
 async function getRequests() {
-  return Request.findAll();
+  return Request.findAll({
+    include: [
+      {
+        model: Student,
+        as: 'student',
+        attributes: ['id', 'fullName', 'faculty', 'specialization', 'group']
+      },
+      {
+        model: Session,
+        as: 'session',
+        attributes: ['id', 'professorId', 'startTime', 'endTime', 'maxSpots'],
+        include: [
+          {
+            model: Professor,
+            as: 'professor',
+            attributes: ['id', 'fullName', 'department']
+          },
+          {
+            model: UniversitySession,
+            as: 'universitySession',
+            attributes: ['id', 'name', 'academicYear', 'type']
+          }
+        ]
+      }
+    ]
+  });
 }
 
 async function getRequestById(id) {
@@ -41,7 +67,28 @@ async function getRequestsByStudent(studentId) {
 }
 
 async function getRequestsBySession(sessionId) {
-  return Request.findAll({ where: { sessionId } });
+  return Request.findAll({ 
+    where: { sessionId },
+    include: [
+      {
+        model: Student,
+        as: 'student',
+        attributes: ['id', 'fullName', 'faculty', 'specialization', 'group']
+      },
+      {
+        model: Session,
+        as: 'session',
+        attributes: ['id', 'startTime', 'endTime', 'maxSpots'],
+        include: [
+          {
+            model: UniversitySession,
+            as: 'universitySession',
+            attributes: ['id', 'name', 'academicYear', 'type']
+          }
+        ]
+      }
+    ]
+  });
 }
 
 async function updateRequest(id, updates) {

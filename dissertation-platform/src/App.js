@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import StudentDashboard from './pages/StudentDashboard';
 import StudentProfile from './pages/StudentProfile';
 import ProfessorDashboard from './pages/ProfessorDashboard';
+import ProfessorProfile from './pages/ProfessorProfile';
 
 function App() {
   const { user } = useSelector((state) => state.auth);
@@ -29,6 +30,10 @@ function App() {
           <Route 
             path="/professor" 
             element={user && user.role === 'PROFESSOR' ? <ProfessorDashboard user={user} /> : <Navigate to="/login" />} 
+          />
+          <Route 
+            path="/professor/profile" 
+            element={user && user.role === 'PROFESSOR' ? <ProfessorProfile user={user} /> : <Navigate to="/login" />} 
           />
         </Routes>
       </div>

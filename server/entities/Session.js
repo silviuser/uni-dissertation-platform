@@ -48,6 +48,14 @@ const Session = db.define("Session", {
 			min: 1,
 		},
 	},
+	availableSpots: {
+		type: Sequelize.INTEGER,
+		allowNull: false,
+		defaultValue: 0, // Se va seta automat la maxSpots când se creează
+		validate: {
+			min: 0,
+		},
+	},
 	universitySessionId: {
         type: Sequelize.UUID,
         allowNull: false, // O sesiune trebuie obligatoriu să aparțină unei sesiuni universitare

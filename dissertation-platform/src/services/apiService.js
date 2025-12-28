@@ -155,6 +155,23 @@ const updateStudentProfile = async (studentId, data) => {
   return response.data;
 };
 
+// --- API Professor Profile ---
+const getProfessorById = async (professorId) => {
+  const response = await axios.get(`${API_URL}/professors/${professorId}`);
+  return response.data;
+};
+
+const updateProfessorProfile = async (professorId, data) => {
+  const response = await axios.put(`${API_URL}/professors/${professorId}`, data);
+  return response.data;
+};
+
+// --- API Approved Students ---
+const getApprovedStudents = async (professorId) => {
+  const response = await axios.get(`${API_URL}/requests/professor/${professorId}/approved`);
+  return response.data;
+};
+
 const apiService = {
   getSessions,
   getProfessorSessions,
@@ -172,7 +189,10 @@ const apiService = {
   getProfessors,
   getUniversitySessions,
   getStudentById,
-  updateStudentProfile
+  updateStudentProfile,
+  getApprovedStudents,
+  getProfessorById,
+  updateProfessorProfile
 };
 
 export default apiService;

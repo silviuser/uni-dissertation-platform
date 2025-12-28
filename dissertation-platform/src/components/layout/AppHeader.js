@@ -18,7 +18,7 @@ const AppHeader = ({ onMenuClick, title = 'Student Dashboard', user, onLogout })
             <div className="avatar" aria-hidden> {user.fullName?.[0] || 'S'} </div>
             <div className="user-meta">
               <div className="user-name">{user.fullName || user.email}</div>
-              <div className="user-role">Student</div>
+              <div className="user-role">{user.role === 'PROFESSOR' ? 'Professor' : 'Student'}</div>
             </div>
           </div>
         )}

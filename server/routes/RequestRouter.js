@@ -8,7 +8,7 @@ import {
   updateRequest,
   deleteRequest,
 } from "../dataAccess/RequestDA.js";
-import { getSessionById } from "../dataAccess/SessionDA.js";
+import { getSessionById, updateSession } from "../dataAccess/SessionDA.js";
 import { authenticate, requireProfessor, requireStudent } from "../middleware/auth.js";
 import multer from "multer";
 import fs from "fs";
@@ -43,8 +43,11 @@ const upload = multer({ storage, fileFilter });
 
 function toPublicRequest(r) {
   if (!r) return null;
-  const sessionData = r.session ? (r.session.toJSON ? r.session.toJSON() : r.session) : null;
-  const { id, studentId, sessionId, status, rejectionReason, studentFile, teacherFile, applicationMessage, createdAt, updatedAt } = r;
+  const requestData = r.toJSON ? r.toJSON() : r;
+  const sessionData = requestData.session;
+  const studentData = requestData.student;
+  
+  const { id, studentId, sessionId, status, rejectionReason, studentFile, teacherFile, applicationMessage, createdAt, updatedAt } = requestData;
   
   return { 
     id, 
@@ -57,10 +60,18 @@ function toPublicRequest(r) {
     applicationMessage, 
     createdAt, 
     updatedAt,
+    student: studentData ? {
+      id: studentData.id,
+      fullName: studentData.fullName,
+      faculty: studentData.faculty,
+      specialization: studentData.specialization,
+      group: studentData.group
+    } : null,
     session: sessionData ? {
       id: sessionData.id,
       startTime: sessionData.startTime,
       endTime: sessionData.endTime,
+      maxSpots: sessionData.maxSpots,
       professor: sessionData.professor ? {
         id: sessionData.professor.id,
         fullName: sessionData.professor.fullName,
@@ -68,7 +79,9 @@ function toPublicRequest(r) {
       } : null,
       universitySession: sessionData.universitySession ? {
         id: sessionData.universitySession.id,
-        name: sessionData.universitySession.name
+        name: sessionData.universitySession.name,
+        academicYear: sessionData.universitySession.academicYear,
+        type: sessionData.universitySession.type
       } : null
     } : null
   };
@@ -117,6 +130,26 @@ router.get("/session/:sessionId", async (req, res) => {
     return res.json(list.map(toPublicRequest));
   } catch (err) {
     return res.status(500).json({ message: "Eroare la cautare cererilor sesiunii", error: err.message });
+  }
+});
+
+// Nou endpoint pentru approved students al unui profesor
+router.get("/professor/:professorId/approved", authenticate, requireProfessor, async (req, res) => {
+  try {
+    if (req.params.professorId !== req.user.id) {
+      return res.status(403).json({ message: "Nu poți vedea studenții altor profesori" });
+    }
+
+    const allRequests = await getRequests();
+    const approvedRequests = allRequests.filter(r => 
+      r.status === 'APPROVED' && 
+      r.session && 
+      r.session.professorId === req.params.professorId
+    );
+    
+    return res.json(approvedRequests.map(toPublicRequest));
+  } catch (err) {
+    return res.status(500).json({ message: "Eroare la cautare studenți aprobați", error: err.message });
   }
 });
 
@@ -358,15 +391,15 @@ router.put("/:id", authenticate, requireProfessor, async (req, res) => {
       }
 
       // 2. Verifică numărul de locuri disponibile la sesiune
-      const sessionRequests = await getRequestsBySession(currentRequest.sessionId);
-      const approvedCount = sessionRequests.filter(r => r.status === "APPROVED").length;
-
-      if (approvedCount >= session.maxSpots) {
+      if (session.availableSpots <= 0) {
         return res.status(400).json({ 
-          message: `Sesiunea a atins limita maximă de ${session.maxSpots} locuri` 
+          message: `Sesiunea nu mai are locuri disponibile` 
         });
       }
     }
+
+    // Store old status to check if it changed
+    const oldStatus = currentRequest.status;
 
     const updates = { status };
     if (rejectionReason) updates.rejectionReason = rejectionReason;
@@ -375,6 +408,19 @@ router.put("/:id", authenticate, requireProfessor, async (req, res) => {
 
     const updated = await updateRequest(req.params.id, updates);
     if (!updated) return res.status(404).json({ message: "Cerere inexistentă" });
+
+    // Update availableSpots based on status change
+    if (status === "APPROVED" && oldStatus !== "APPROVED") {
+      // Decrease available spots when approving
+      await updateSession(session.id, { 
+        availableSpots: session.availableSpots - 1 
+      });
+    } else if (status !== "APPROVED" && oldStatus === "APPROVED") {
+      // Increase available spots when rejecting a previously approved request
+      await updateSession(session.id, { 
+        availableSpots: session.availableSpots + 1 
+      });
+    }
 
     // Dacă aprobăm o cerere, ștergem automat celelalte cereri ale studentului
     if (status === "APPROVED") {
@@ -401,6 +447,16 @@ router.delete("/:id", authenticate, requireStudent, async (req, res) => {
 
     if (request.studentId !== req.user.id) {
       return res.status(403).json({ message: "Nu poți șterge cereri ale altor studenți" });
+    }
+
+    // If the request was approved, increase available spots back
+    if (request.status === "APPROVED") {
+      const session = await getSessionById(request.sessionId);
+      if (session) {
+        await updateSession(session.id, { 
+          availableSpots: session.availableSpots + 1 
+        });
+      }
     }
 
     const deleted = await deleteRequest(req.params.id);

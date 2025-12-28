@@ -7,7 +7,7 @@ const Sidebar = ({ open, onClose, onNavigate, user, onLogout, active = 'dashboar
         <div className="avatar-lg">{user?.fullName?.[0] || 'S'}</div>
         <div className="sidebar-user">
           <div className="name">{user?.fullName || user?.email}</div>
-          <div className="role">Student</div>
+          <div className="role">{user?.role === 'PROFESSOR' ? 'Professor' : 'Student'}</div>
         </div>
         <button className="sidebar-close" aria-label="Close menu" onClick={onClose}>✕</button>
       </div>
