@@ -75,6 +75,12 @@ const updateRequestStatus = async (requestId, status, rejectionReason = null) =>
   return response.data;
 };
 
+// --- API Sesiuni Universitare ---
+const getUniversitySessions = async () => {
+  const response = await axios.get(`${API_URL}/university-sessions`);
+  return response.data;
+};
+
 const apiService = {
   getSessions,
   getProfessorSessions, // exportăm
@@ -83,7 +89,8 @@ const apiService = {
   getStudentRequests,
   getSessionRequests,   // exportăm
   updateRequestStatus,  // exportăm
-  getProfessors
+  getProfessors,
+  getUniversitySessions // exportăm
 };
 
 export default apiService;

@@ -1,236 +1,185 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiService from '../services/apiService';
+import authService from '../services/authService';
+import AppHeader from '../components/layout/AppHeader';
+import Sidebar from '../components/layout/Sidebar';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
-const StudentDashboard = ({ user, onLogout }) => {
-  const [sessions, setSessions] = useState([]);
+const statusLabel = (s) => {
+  switch (s) {
+    case 'APPROVED': return 'Approved';
+    case 'REJECTED': return 'Rejected';
+    default: return 'Pending Approval';
+  }
+};
+
+const StudentDashboard = ({ user }) => {
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [myRequests, setMyRequests] = useState([]);
-  const [activeTab, setActiveTab] = useState('sessions'); // 'sessions' sau 'requests'
+  const [sessions, setSessions] = useState([]);
+  const [universitySessions, setUniversitySessions] = useState([]);
+  const [selectedUniversitySession, setSelectedUniversitySession] = useState('');
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState({ type: '', text: '' });
 
-  // Încărcăm datele la montarea componentei
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      // 1. Luăm toate sesiunile
-      const sessionsData = await apiService.getSessions();
-      setSessions(sessionsData);
-
-      // 2. Luăm cererile studentului curent
-      const requestsData = await apiService.getStudentRequests(user.id);
-      setMyRequests(requestsData);
-    } catch (err) {
-      console.error("Eroare la încărcare date", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleApply = async (sessionId) => {
-    try {
-      // Verificăm dacă a aplicat deja la această sesiune (frontend check rapid)
-      const alreadyApplied = myRequests.some(r => r.sessionId === sessionId);
-      if (alreadyApplied) {
-        setMessage({ type: 'error', text: 'Ai aplicat deja la această sesiune!' });
-        return;
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [sessionsData, requestsData, universitySessionsData] = await Promise.all([
+          apiService.getSessions(),
+          apiService.getStudentRequests(user.id),
+          apiService.getUniversitySessions()
+        ]);
+        setSessions(sessionsData);
+        setMyRequests(requestsData);
+        setUniversitySessions(universitySessionsData);
+      } catch (err) {
+        console.error('Eroare la încărcare date', err);
+      } finally {
+        setLoading(false);
       }
+    };
+    fetchData();
+  }, [user.id]);
 
-      await apiService.createRequest(user.id, sessionId);
-      setMessage({ type: 'success', text: 'Cerere trimisă cu succes!' });
-      
-      // Reîncărcăm datele pentru a vedea noua cerere în listă
-      fetchData();
-      setActiveTab('requests'); // Mutăm utilizatorul pe tab-ul cu cereri
-    } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Eroare la aplicare' });
-    }
+  const latestRequest = useMemo(() => {
+    if (!myRequests || myRequests.length === 0) return null;
+    return [...myRequests].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+  }, [myRequests]);
+
+  const filteredSessions = useMemo(() => {
+    if (!selectedUniversitySession) return sessions;
+    return sessions.filter(s => s.universitySessionId === selectedUniversitySession);
+  }, [sessions, selectedUniversitySession]);
+
+  const onLogout = () => {
+    authService.logout();
+    navigate('/login');
   };
 
   return (
-    <div className="dashboard-container" style={{ padding: '2rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h2>🎓 Panou Student</h2>
-          <p>Bun venit, <strong>{user.fullName || user.email}</strong></p>
-        </div>
-        <button onClick={onLogout} style={styles.logoutBtn}>Deconectare</button>
-      </header>
+    <div>
+      <AppHeader onMenuClick={() => setMenuOpen(!menuOpen)} title="Student Dashboard" user={user} />
 
-      {/* Mesaje de notificare (Succes/Eroare) */}
-      {message.text && (
-        <div style={{ 
-          padding: '10px', 
-          marginBottom: '20px', 
-          borderRadius: '4px',
-          backgroundColor: message.type === 'error' ? '#f8d7da' : '#d4edda',
-          color: message.type === 'error' ? '#721c24' : '#155724'
-        }}>
-          {message.text}
-          <button onClick={() => setMessage({ type: '', text: '' })} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>X</button>
-        </div>
-      )}
+      <main className="dashboard-shell">
+        <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} user={user} onLogout={onLogout} />
+        <section className="content">
+          <h1 className="login-title">Welcome back, {user.fullName?.split(' ')[0] || 'Student'}</h1>
+          <p className="login-subtitle">Here is an overview of your thesis application status.</p>
 
-      {/* Meniu Tab-uri */}
-      <div style={{ marginBottom: '20px', borderBottom: '1px solid #ddd' }}>
-        <button 
-          style={activeTab === 'sessions' ? styles.activeTab : styles.tab} 
-          onClick={() => setActiveTab('sessions')}
-        >
-          Sesiuni Disponibile
-        </button>
-        <button 
-          style={activeTab === 'requests' ? styles.activeTab : styles.tab} 
-          onClick={() => setActiveTab('requests')}
-        >
-          Cererile Mele ({myRequests.length})
-        </button>
-      </div>
+          <div className="dashboard-grid">
+            <Card>
+              <div className="title">Current Status</div>
+              <div style={{ height: 8 }} />
+              <span className={`status-pill ${latestRequest?.status === 'APPROVED' ? 'approved' : latestRequest?.status === 'REJECTED' ? 'rejected' : ''}`}>
+                {statusLabel(latestRequest?.status)}
+              </span>
+              <div className="meta" style={{ marginTop: 8 }}>
+                Last updated {latestRequest ? new Date(latestRequest.updatedAt).toLocaleString() : '—'}
+              </div>
+            </Card>
 
-      {loading ? <p>Se încarcă datele...</p> : (
-        <div className="tab-content">
-          
-          {/* TAB 1: LISTA SESIUNI */}
-          {activeTab === 'sessions' && (
-            <div>
-              <h3>Sesiuni de Înscriere Deschise</h3>
-              {sessions.length === 0 ? <p>Nu există sesiuni active momentan.</p> : (
-                <div style={styles.grid}>
-                  {sessions.map(session => (
-                    <div key={session.id} style={styles.card}>
-                      <h4>Profesor ID: {session.professorId}</h4> 
-                      {/* Notă: Ideal ar fi să avem numele profesorului, nu ID-ul. Vom rezolva asta ulterior. */}
-                      <p><strong>Interval:</strong> {new Date(session.startTime).toLocaleDateString()} - {new Date(session.endTime).toLocaleDateString()}</p>
-                      <p><strong>Locuri:</strong> {session.maxSpots}</p>
-                      <button 
-                        onClick={() => handleApply(session.id)}
-                        style={styles.primaryBtn}
-                      >
-                        Aplică Acum
-                      </button>
-                    </div>
-                  ))}
+            <Card>
+              <div className="title">Next Steps</div>
+              <div className="meta" style={{ marginTop: 8 }}>
+                {latestRequest?.status === 'APPROVED' && 'Upload your thesis file and follow professor instructions.'}
+                {latestRequest?.status === 'REJECTED' && `Review feedback: ${latestRequest?.rejectionReason || 'No reason provided'}.`}
+                {!latestRequest && 'Apply to a session to start your application.'}
+                {latestRequest?.status === 'PENDING' && 'Your application has been submitted. You will receive an email notification once a decision has been made.'}
+              </div>
+            </Card>
+          </div>
+
+          <h2 className="section-title">Active Application</h2>
+          <Card>
+            {latestRequest ? (
+              <div className="request-card">
+                <div>
+                  <div className="title">Request #{latestRequest.id.slice(0, 6).toUpperCase()}</div>
+                  <div style={{ height: 6 }} />
+                  <div style={{ fontWeight: 700 }}>Machine Learning in Healthcare</div>
+                  <p className="meta" style={{ maxWidth: 760 }}>
+                    Proposed thesis exploring the impact of predictive algorithms on patient diagnosis accuracy. Targeting the Department of Computer Science under supervision of Prof. Johnson.
+                  </p>
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 2: LISTA CERERI */}
-          {activeTab === 'requests' && (
-            <div>
-              <h3>Istoricul Cererilor</h3>
-              {myRequests.length === 0 ? <p>Nu ai trimis nicio cerere.</p> : (
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
-                      <th style={{ padding: '10px' }}>Sesiune (ID)</th>
-                      <th style={{ padding: '10px' }}>Status</th>
-                      <th style={{ padding: '10px' }}>Dată</th>
-                      <th style={{ padding: '10px' }}>Acțiuni</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {myRequests.map(req => (
-                      <tr key={req.id} style={{ borderBottom: '1px solid #eee' }}>
-                        <td style={{ padding: '10px' }}>{req.sessionId}</td>
-                        <td style={{ padding: '10px' }}>
-                          <span style={getStatusStyle(req.status)}>{req.status}</span>
-                          {req.status === 'REJECTED' && req.rejectionReason && (
-                             <div style={{ fontSize: '0.85rem', color: 'red' }}>Motiv: {req.rejectionReason}</div>
-                          )}
-                        </td>
-                        <td style={{ padding: '10px' }}>{new Date(req.createdAt).toLocaleDateString()}</td>
-                        <td style={{ padding: '10px' }}>
-                          {req.status === 'APPROVED' && (
-                            <button style={styles.secondaryBtn}>Încarcă Fișier</button>
-                          )}
-                        </td>
-                      </tr>
+                <div className="request-actions">
+                  <Button variant="ghost">View Full Details</Button>
+                  <Button variant="ghost">Edit Draft</Button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="meta">No active requests. Browse sessions and apply.</div>
+                <div style={{ height: 12 }} />
+                
+                {/* Filter for University Sessions */}
+                <div style={{ marginBottom: 16 }}>
+                  <label htmlFor="university-session-filter" style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>
+                    Filter by University Session:
+                  </label>
+                  <select
+                    id="university-session-filter"
+                    value={selectedUniversitySession}
+                    onChange={(e) => setSelectedUniversitySession(e.target.value)}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      border: '1px solid #ddd',
+                      fontSize: '14px',
+                      minWidth: '250px'
+                    }}
+                  >
+                    <option value="">All Sessions</option>
+                    {universitySessions.map((us) => (
+                      <option key={us.id} value={us.id}>
+                        {us.name} ({new Date(us.startDate).toLocaleDateString()} - {new Date(us.endDate).toLocaleDateString()})
+                      </option>
                     ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+                  </select>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+                  {filteredSessions.map((s) => (
+                    <Card key={s.id}>
+                      <div className="title" style={{ marginBottom: 8 }}>
+                        {s.professor?.fullName || 'Unknown Professor'}
+                      </div>
+                      {s.professor?.department && (
+                        <div className="meta" style={{ marginBottom: 8 }}>
+                          {s.professor.department}
+                        </div>
+                      )}
+                      <div className="meta" style={{ marginBottom: 4 }}>
+                        <strong>Application Period:</strong>
+                      </div>
+                      <div className="meta" style={{ marginBottom: 8 }}>
+                        {new Date(s.startTime).toLocaleString()} - {new Date(s.endTime).toLocaleString()}
+                      </div>
+                      {s.universitySession && (
+                        <div className="meta" style={{ marginBottom: 8 }}>
+                          <strong>University Session:</strong> {s.universitySession.name}
+                        </div>
+                      )}
+                      <div className="meta" style={{ marginBottom: 12 }}>
+                        Available Spots: {s.maxSpots}
+                      </div>
+                      <Button onClick={() => {/* hook up create request flow on future */}}>Apply</Button>
+                    </Card>
+                  ))}
+                  {filteredSessions.length === 0 && (
+                    <div className="meta">No sessions available for the selected university session.</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </Card>
+        </section>
+      </main>
     </div>
   );
-};
-
-// --- STILURI DE BAZĂ (CSS-in-JS rapid) ---
-const styles = {
-  logoutBtn: {
-    padding: '8px 16px',
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer'
-  },
-  tab: {
-    padding: '10px 20px',
-    cursor: 'pointer',
-    backgroundColor: 'transparent',
-    border: 'none',
-    borderBottom: '3px solid transparent',
-    fontSize: '16px',
-    color: '#666'
-  },
-  activeTab: {
-    padding: '10px 20px',
-    cursor: 'pointer',
-    backgroundColor: 'transparent',
-    border: 'none',
-    borderBottom: '3px solid #007bff',
-    fontWeight: 'bold',
-    fontSize: '16px',
-    color: '#007bff'
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-    gap: '20px',
-    marginTop: '20px'
-  },
-  card: {
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    padding: '15px',
-    backgroundColor: 'white',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-  },
-  primaryBtn: {
-    width: '100%',
-    padding: '8px',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    marginTop: '10px'
-  },
-  secondaryBtn: {
-    padding: '5px 10px',
-    backgroundColor: '#28a745',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '12px'
-  }
-};
-
-const getStatusStyle = (status) => {
-  const base = { fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px' };
-  switch (status) {
-    case 'APPROVED': return { ...base, backgroundColor: '#d4edda', color: '#155724' };
-    case 'REJECTED': return { ...base, backgroundColor: '#f8d7da', color: '#721c24' };
-    default: return { ...base, backgroundColor: '#fff3cd', color: '#856404' };
-  }
 };
 
 export default StudentDashboard;

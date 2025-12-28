@@ -1,4 +1,6 @@
 import Session from "../entities/Session.js";
+import Professor from "../entities/Professor.js";
+import UniversitySession from "../entities/UniversitySession.js";
 import { Op } from "sequelize";
 
 async function createSession(session) {
@@ -6,7 +8,20 @@ async function createSession(session) {
 }
 
 async function getSessions() {
-  return Session.findAll();
+  return Session.findAll({
+    include: [
+      {
+        model: Professor,
+        as: 'professor',
+        attributes: ['id', 'fullName', 'department']
+      },
+      {
+        model: UniversitySession,
+        as: 'universitySession',
+        attributes: ['id', 'name', 'academicYear', 'type']
+      }
+    ]
+  });
 }
 
 async function getSessionById(id) {

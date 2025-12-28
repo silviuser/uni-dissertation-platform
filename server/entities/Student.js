@@ -25,6 +25,14 @@ const Student = db.define("Student", {
 		type: Sequelize.STRING(150),
 		allowNull: false,
 	},
+	faculty: {
+		type: Sequelize.STRING(150),
+		allowNull: false,
+	},
+	specialization: {
+		type: Sequelize.STRING(150),
+		allowNull: false,
+	},
 	group: {
 		type: Sequelize.STRING(50),
 		allowNull: false,

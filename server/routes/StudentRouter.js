@@ -7,15 +7,15 @@ const router = express.Router();
 
 function toPublicStudent(s) {
 	if (!s) return null;
-	const { id, email, fullName, group, createdAt } = s;
-	return { id, email, fullName, group, createdAt };
+	const { id, email, fullName, faculty, specialization, group, createdAt } = s;
+	return { id, email, fullName, faculty, specialization, group, createdAt };
 }
 
 router.post("/", async (req, res) => {
 	try {
-		const { email, password, fullName, group } = req.body;
-		if (!email || !password || !fullName || !group) {
-			return res.status(400).json({ message: "email, password, fullName, group sunt obligatorii" });
+		const { email, password, fullName, faculty, specialization, group } = req.body;
+		if (!email || !password || !fullName || !faculty || !specialization || !group) {
+			return res.status(400).json({ message: "email, password, fullName, faculty, specialization, group sunt obligatorii" });
 		}
 
 		const existing = await getStudentByEmail(email);
@@ -24,7 +24,7 @@ router.post("/", async (req, res) => {
 		}
 
 		const hash = bcrypt.hashSync(password, 10);
-		const created = await createStudent({ email, password: hash, fullName, group });
+		const created = await createStudent({ email, password: hash, fullName, faculty, specialization, group });
 		return res.status(201).json(toPublicStudent(created));
 	} catch (err) {
 		return res.status(500).json({ message: "Eroare la creare student", error: err.message });

@@ -13,8 +13,32 @@ const router = express.Router();
 
 function toPublicSession(s) {
   if (!s) return null;
-  const { id, professorId, description, startTime, endTime, maxSpots } = s;
-  return { id, professorId, description, startTime, endTime, maxSpots };
+  
+  // Convertim obiectul Sequelize la JSON pentru a accesa datele nested
+  const sessionData = s.toJSON ? s.toJSON() : s;
+  
+  const { id, professorId, description, startTime, endTime, maxSpots, universitySessionId, professor, universitySession } = sessionData;
+  
+  return { 
+    id, 
+    professorId, 
+    description, 
+    startTime, 
+    endTime, 
+    maxSpots, 
+    universitySessionId,
+    professor: professor ? {
+      id: professor.id,
+      fullName: professor.fullName,
+      department: professor.department
+    } : null,
+    universitySession: universitySession ? {
+      id: universitySession.id,
+      name: universitySession.name,
+      academicYear: universitySession.academicYear,
+      type: universitySession.type
+    } : null
+  };
 }
 
 router.post("/", authenticate, requireProfessor, async (req, res) => {
@@ -43,7 +67,7 @@ router.post("/", authenticate, requireProfessor, async (req, res) => {
       return res.status(409).json({ message: "Sesiune suprapusă pentru acest profesor la intervalul dat" });
     }
 
-    const created = await createSession({ professorId, description, startTime: startDate, endTime: endDate, maxSpots });
+    const created = await createSession({ professorId, description, startTime: startDate, endTime: endDate, maxSpots, universitySessionId });
     return res.status(201).json(toPublicSession(created));
   } catch (err) {
     return res.status(500).json({ message: "Eroare la creare sesiune", error: err.message });

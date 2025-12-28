@@ -14,8 +14,8 @@ function toPublicProfessor(p) {
 
 function toPublicStudent(s) {
   if (!s) return null;
-  const { id, email, fullName, group, createdAt } = s;
-  return { id, email, fullName, group, createdAt };
+  const { id, email, fullName, faculty, specialization, group, createdAt } = s;
+  return { id, email, fullName, faculty, specialization, group, createdAt };
 }
 
 router.post("/login", async (req, res) => {

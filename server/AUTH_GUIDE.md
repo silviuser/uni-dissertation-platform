@@ -50,6 +50,8 @@ Răspuns:
     "id": "uuid",
     "email": "student@example.com",
     "fullName": "Nume Student",
+    "faculty": "Faculty of Engineering",
+    "specialization": "Computer Science",
     "group": "1234"
   }
 }

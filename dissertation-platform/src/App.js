@@ -22,12 +22,12 @@ function App() {
           
           <Route 
             path="/student" 
-            element={user && user.role === 'STUDENT' ? <StudentDashboard user={user} /> : <Navigate to="/login" />} 
+            element={user && user.role === 'STUDENT' ? <StudentDashboard user={user.user || user} /> : <Navigate to="/login" />} 
           />
           
           <Route 
             path="/professor" 
-            element={user && user.role === 'PROFESSOR' ? <ProfessorDashboard user={user} /> : <Navigate to="/login" />} 
+            element={user && user.role === 'PROFESSOR' ? <ProfessorDashboard user={user.user || user} /> : <Navigate to="/login" />} 
           />
         </Routes>
       </div>
