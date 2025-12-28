@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { logoutUser } from '../store/authSlice';
+import { logoutUser } from '../store/actions/authActions';
 import apiService from '../services/apiService';
 import AppHeader from '../components/layout/AppHeader';
 import Sidebar from '../components/layout/Sidebar';

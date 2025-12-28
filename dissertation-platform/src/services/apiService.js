@@ -1,7 +1,8 @@
 import axios from 'axios';
 import authService from './authService';
 import { store } from '../store/store';
-import { logoutUser, reset } from '../store/authSlice';
+import { logoutUser } from '../store/actions/authActions';
+import { reset } from '../store/reducers/authReducer';
 
 const API_URL = "/api";
 

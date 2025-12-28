@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, reset, logoutUser } from '../store/authSlice';
+import { loginUser, logoutUser } from '../store/actions/authActions';
+import { reset } from '../store/reducers/authReducer';
 import authService from '../services/authService';
 import '../App.css';
 
