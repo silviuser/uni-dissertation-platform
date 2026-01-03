@@ -4,7 +4,7 @@ import { store } from '../store/store';
 import { logoutUser } from '../store/actions/authActions';
 import { reset } from '../store/reducers/authReducer';
 
-const API_URL = "dissertation-platform-api-gshqgae2c0fcc2ar.spaincentral-01.azurewebsites.net/api";
+const API_URL = "https://dissertation-platform-api-gshqgae2c0fcc2ar.spaincentral-01.azurewebsites.net/api";
 
 // Configurare automată a token-ului pentru fiecare cerere
 // Astfel nu trebuie să punem manual header-ul "Authorization" de fiecare dată
