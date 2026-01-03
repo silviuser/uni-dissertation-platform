@@ -1,5 +1,6 @@
 import express from 'express';
 import env from 'dotenv';
+import cors from 'cors';
 import DB_Init from './entities/DB_init.js';
 import createDBRouter from './routes/createDBRouter.js';
 import StudentRouter from './routes/StudentRouter.js';
@@ -14,6 +15,17 @@ import { fileURLToPath } from 'url';
 env.config();
 
 let app = express();
+
+app.use(cors({
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:8080',
+    'https://uni-platform.azurewebsites.net' 
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
