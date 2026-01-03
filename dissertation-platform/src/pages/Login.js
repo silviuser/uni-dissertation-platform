@@ -30,7 +30,7 @@ const Login = () => {
 
   useEffect(() => {
     if (isError) {
-      setError(message || 'Login failed');
+      setError(message || 'Autentificare eșuată');
     }
     if (isSuccess || user) {
       if (user?.role === 'PROFESSOR') navigate('/professor');
@@ -79,11 +79,11 @@ const Login = () => {
               <div className="brand-mark">TP</div>
               <span className="brand-name">ThesisPortal</span>
             </div>
-            <h2 className="login-title">Esti deja autentificat</h2>
-            <p className="login-subtitle">Doresti sa te deloghezi pentru a folosi alt cont?</p>
+            <h2 className="login-title">Ești deja autentificat</h2>
+            <p className="login-subtitle">Dorești să te deconectezi pentru a folosi alt cont?</p>
             <div className="action-row">
-              <button className="btn ghost" type="button" onClick={handleStayLoggedIn}>Ramai logat</button>
-              <button className="btn primary" type="button" onClick={handleLogout}>Delogheaza-ma</button>
+              <button className="btn ghost" type="button" onClick={handleStayLoggedIn}>Rămâi conectat</button>
+              <button className="btn primary" type="button" onClick={handleLogout}>Deconectează-mă</button>
             </div>
           </div>
         </div>
@@ -102,13 +102,13 @@ const Login = () => {
           </div>
 
           <div className="welcome-copy">
-            <h1 className="login-title">Welcome back</h1>
-            <p className="login-subtitle">Please enter your details to sign in.</p>
+            <h1 className="login-title">Bine ai revenit</h1>
+            <p className="login-subtitle">Introdu datele tale pentru a te autentifica.</p>
           </div>
 
           {error && <div className="alert error">{error}</div>}
 
-          <div className="role-toggle" role="group" aria-label="Select role">
+          <div className="role-toggle" role="group" aria-label="Selectează rolul">
             <button
               type="button"
               className={`toggle-btn ${role === 'STUDENT' ? 'active' : ''}`}
@@ -121,12 +121,12 @@ const Login = () => {
               className={`toggle-btn ${role === 'PROFESSOR' ? 'active' : ''}`}
               onClick={() => handleRoleChange('PROFESSOR')}
             >
-              Professor
+              Profesor
             </button>
           </div>
 
           <form className="login-form" onSubmit={onSubmit}>
-            <label className="form-label" htmlFor="email">Institutional Email or Username</label>
+            <label className="form-label" htmlFor="email">Email Instituțional</label>
             <input
               className="form-input"
               type="email"
@@ -134,11 +134,11 @@ const Login = () => {
               name="email"
               value={email}
               onChange={onChange}
-              placeholder="e.g. s123456@university.edu"
+              placeholder="ex: ion.popescu@university.edu"
               required
             />
 
-            <label className="form-label" htmlFor="password">Password</label>
+            <label className="form-label" htmlFor="password">Parolă</label>
             <input
               className="form-input"
               type="password"
@@ -151,16 +151,16 @@ const Login = () => {
             />
 
             <div className="form-meta">
-              <a className="link subtle" href="#">Forgot password?</a>
+              <a className="link subtle" href="#">Ai uitat parola?</a>
             </div>
 
             <button className="btn primary full" type="submit" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Log in'}
+              {isLoading ? 'Se autentifică...' : 'Autentificare'}
             </button>
           </form>
 
           <p className="footer-note">
-            Do not have an account? <Link className="link" to="/register">Register now</Link>
+            Nu ai un cont? <Link className="link" to="/register">Înregistrează-te</Link>
           </p>
         </div>
       </div>
@@ -174,13 +174,13 @@ const HeroPanel = () => (
     <div className="hero-overlay" />
     <div className="hero-content">
       <div className="hero-icon">🎓</div>
-      <h2 className="hero-title">Streamline Your Academic Journey</h2>
+      <h2 className="hero-title">Simplifică-ți Parcursul Academic</h2>
       <p className="hero-text">
-        The centralized platform for managing thesis requests, approvals, and tracking for students and faculty members.
+        Platforma centralizată pentru gestionarea cererilor de licență, aprobări și urmărirea progresului pentru studenți și profesori.
       </p>
       <div className="hero-features">
-        <span>Secure Access</span>
-        <span>Real-time Updates</span>
+        <span>Acces Securizat</span>
+        <span>Actualizări în Timp Real</span>
       </div>
     </div>
   </div>
