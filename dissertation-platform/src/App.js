@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import StudentDashboard from './pages/StudentDashboard';
 import StudentProfile from './pages/StudentProfile';
 import ProfessorDashboard from './pages/ProfessorDashboard';
@@ -17,6 +18,7 @@ function App() {
           <Route path="/" element={<Navigate to="/login" />} />
           
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           
           <Route 
             path="/student" 
