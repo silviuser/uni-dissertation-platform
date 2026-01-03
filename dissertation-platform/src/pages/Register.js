@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../App.css';
 
-const API_URL = "/api";
+const API_URL = "https://dissertation-platform-api-gshqgae2c0fcc2ar.spaincentral-01.azurewebsites.net/api";
 
 const Register = () => {
   const [role, setRole] = useState('STUDENT');
