@@ -19,17 +19,17 @@ const ActiveApplicationSection = ({
 }) => {
   return (
     <>
-      <h2 className="section-title">Active Application</h2>
+      <h2 className="section-title">Sesiuni Disponibile</h2>
       <Card>
         <div>
-          <div className="meta">Browse sessions and apply.</div>
+          <div className="meta">Caută sesiuni și aplică.</div>
           <div style={{ height: 12 }} />
 
           {canApply && (
             <>
               <div style={{ marginBottom: 16 }}>
                 <label htmlFor="university-session-filter" style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>
-                  Filter by University Session:
+                  Filtrează după Sesiunea Universitară:
                 </label>
                 <select
                   id="university-session-filter"
@@ -43,7 +43,7 @@ const ActiveApplicationSection = ({
                     minWidth: '250px'
                   }}
                 >
-                  <option value="">All Sessions</option>
+                  <option value="">Toate Sesiunile</option>
                   {universitySessions.map((us) => (
                     <option key={us.id} value={us.id}>
                       {us.name}
@@ -62,7 +62,7 @@ const ActiveApplicationSection = ({
                   return (
                     <Card key={s.id} style={{ opacity: isFull ? 0.6 : 1 }}>
                       <div className="title" style={{ marginBottom: 8 }}>
-                        {s.professor?.fullName || 'Unknown Professor'}
+                        {s.professor?.fullName || 'Profesor Necunoscut'}
                       </div>
                       {s.professor?.department && (
                         <div className="meta" style={{ marginBottom: 8 }}>
@@ -70,14 +70,14 @@ const ActiveApplicationSection = ({
                         </div>
                       )}
                       <div className="meta" style={{ marginBottom: 4 }}>
-                        <strong>Application Period:</strong>
+                        <strong>Perioada de Înscriere:</strong>
                       </div>
                       <div className="meta" style={{ marginBottom: 8 }}>
                         {new Date(s.startTime).toLocaleString()} - {new Date(s.endTime).toLocaleString()}
                       </div>
                       {s.universitySession && (
                         <div className="meta" style={{ marginBottom: 8 }}>
-                          <strong>University Session:</strong> {s.universitySession.name}
+                          <strong>Sesiunea Universitară:</strong> {s.universitySession.name}
                         </div>
                       )}
                       <div className="meta" style={{ marginBottom: 12, color: isFull ? '#dc3545' : '#28a745', fontWeight: '600' }}>
@@ -88,13 +88,13 @@ const ActiveApplicationSection = ({
                         disabled={isDisabled}
                         style={{ opacity: isDisabled ? 0.6 : 1 }}
                       >
-                        {alreadyApplied ? 'Already Applied' : isFull ? 'Full - No Spots' : 'Apply'}
+                        {alreadyApplied ? 'Deja Aplicat' : isFull ? 'Complet - Fără Locuri' : 'Aplică'}
                       </Button>
                     </Card>
                   );
                 })}
                 {filteredSessions.length === 0 && (
-                  <div className="meta">No sessions available for the selected university session.</div>
+                  <div className="meta">Nu există sesiuni disponibile pentru sesiunea universitară selectată.</div>
                 )}
               </div>
 
@@ -112,22 +112,22 @@ const ActiveApplicationSection = ({
                   zIndex: 1000
                 }}>
                   <Card style={{ maxWidth: 500, width: '90%', maxHeight: '80vh', overflow: 'auto' }}>
-                    <div className="title" style={{ marginBottom: 16 }}>Apply to Session</div>
+                    <div className="title" style={{ marginBottom: 16 }}>Aplică la Sesiune</div>
 
                     <div style={{ marginBottom: 12 }}>
-                      <div className="meta"><strong>Professor:</strong> {selectedSessionForApplication.professor?.fullName}</div>
-                      <div className="meta"><strong>Period:</strong> {new Date(selectedSessionForApplication.startTime).toLocaleString()} - {new Date(selectedSessionForApplication.endTime).toLocaleString()}
+                      <div className="meta"><strong>Profesor:</strong> {selectedSessionForApplication.professor?.fullName}</div>
+                      <div className="meta"><strong>Perioada:</strong> {new Date(selectedSessionForApplication.startTime).toLocaleString()} - {new Date(selectedSessionForApplication.endTime).toLocaleString()}
                       </div>
                     </div>
 
                     <label htmlFor="application-message" style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>
-                      Application Message:
+                      Mesajul Cererii:
                     </label>
                     <textarea
                       id="application-message"
                       value={applicationMessage}
                       onChange={(e) => setApplicationMessage(e.target.value)}
-                      placeholder="Enter your application message..."
+                      placeholder="Introdu mesajul pentru cerere..."
                       style={{
                         width: '100%',
                         padding: '10px',
@@ -143,10 +143,10 @@ const ActiveApplicationSection = ({
 
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                       <Button variant="ghost" onClick={onCancelApplication} disabled={submittingApplication}>
-                        Cancel
+                        Anulează
                       </Button>
                       <Button onClick={onSubmitApplication} disabled={submittingApplication}>
-                        {submittingApplication ? 'Submitting...' : 'Submit Application'}
+                        {submittingApplication ? 'Se trimite...' : 'Trimite Cererea'}
                       </Button>
                     </div>
                   </Card>

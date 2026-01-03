@@ -98,7 +98,7 @@ const ProfessorDashboardCreateSession = ({
 
           <div style={{ marginBottom: '24px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px' }}>
-              University Session:
+              Sesiune Universitate:
             </label>
             <select 
               required
@@ -113,7 +113,7 @@ const ProfessorDashboardCreateSession = ({
                 boxSizing: 'border-box'
               }}
             >
-              <option value="">Select University Session</option>
+              <option value="">Selectează Sesiunea Universitate</option>
               {universitySessions.map(us => (
                 <option key={us.id} value={us.id}>{us.name}</option>
               ))}

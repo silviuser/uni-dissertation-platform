@@ -24,6 +24,8 @@ const StudentDashboard = ({ user }) => {
   const [submittingApplication, setSubmittingApplication] = useState(false);
   const [signedFormFile, setSignedFormFile] = useState(null);
   const [uploadingSignedForm, setUploadingSignedForm] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,7 +86,7 @@ const StudentDashboard = ({ user }) => {
 
   const handleSubmitApplication = async () => {
     if (!applicationMessage.trim()) {
-      alert('Please enter an application message');
+      setMessage({ type: 'error', text: 'Te rugăm să introduci un mesaj pentru cerere' });
       return;
     }
 
@@ -104,10 +106,10 @@ const StudentDashboard = ({ user }) => {
       // Close the form
       setSelectedSessionForApplication(null);
       setApplicationMessage('');
-      alert('Application submitted successfully!');
+      setMessage({ type: 'success', text: 'Cererea a fost trimisă cu succes!' });
     } catch (err) {
       console.error('Error submitting application:', err);
-      alert('Error submitting application');
+      setMessage({ type: 'error', text: 'Eroare la trimiterea cererii' });
     } finally {
       setSubmittingApplication(false);
     }
@@ -120,17 +122,17 @@ const StudentDashboard = ({ user }) => {
 
   const handleUploadSignedForm = async () => {
     if (!signedFormFile) {
-      alert('Please select a PDF to upload.');
+      setMessage({ type: 'error', text: 'Te rugăm să selectezi un fișier PDF.' });
       return;
     }
 
     if (signedFormFile.type !== 'application/pdf') {
-      alert('Only PDF files are allowed.');
+      setMessage({ type: 'error', text: 'Doar fișierele PDF sunt acceptate.' });
       return;
     }
 
     if (!approvedRequest) {
-      alert('No approved request found.');
+      setMessage({ type: 'error', text: 'Nu a fost găsită o cerere aprobată.' });
       return;
     }
 
@@ -143,59 +145,61 @@ const StudentDashboard = ({ user }) => {
       const updatedRequests = await apiService.getStudentRequests(user.id);
       setMyRequests(updatedRequests);
 
-      alert('File uploaded successfully.');
+      setMessage({ type: 'success', text: 'Fișierul a fost încărcat cu succes.' });
       setSignedFormFile(null);
     } catch (err) {
       console.error('Error uploading signed form:', err);
-      const message = err?.response?.data?.message || 'Error uploading file';
-      alert(message);
+      const msg = err?.response?.data?.message || 'Eroare la încărcarea fișierului';
+      setMessage({ type: 'error', text: msg });
     } finally {
       setUploadingSignedForm(false);
     }
   };
 
   const handleDeleteRequest = async (requestId) => {
-    if (!window.confirm('Are you sure you want to delete this request?')) {
-      return;
-    }
-
-    try {
-      await apiService.deleteRequest(requestId);
-      
-      // Refresh requests
-      const updatedRequests = await apiService.getStudentRequests(user.id);
-      setMyRequests(updatedRequests);
-      
-      alert('Request deleted successfully!');
-    } catch (err) {
-      console.error('Error deleting request:', err);
-      alert('Error deleting request');
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Confirmare Ștergere',
+      message: 'Ești sigur că vrei să ștergi această cerere?',
+      onConfirm: async () => {
+        setConfirmDialog({ open: false, title: '', message: '', onConfirm: null });
+        try {
+          await apiService.deleteRequest(requestId);
+          const updatedRequests = await apiService.getStudentRequests(user.id);
+          setMyRequests(updatedRequests);
+          setMessage({ type: 'success', text: 'Cererea a fost ștearsă cu succes!' });
+        } catch (err) {
+          console.error('Error deleting request:', err);
+          setMessage({ type: 'error', text: 'Eroare la ștergerea cererii' });
+        }
+      }
+    });
   };
 
   const handleDeleteSignedFile = async (requestId) => {
-    if (!window.confirm('Are you sure you want to delete the uploaded file? You can upload a new one afterwards.')) {
-      return;
-    }
-
-    try {
-      await apiService.deleteSignedFile(requestId);
-      
-      // Refresh requests
-      const updatedRequests = await apiService.getStudentRequests(user.id);
-      setMyRequests(updatedRequests);
-      
-      alert('File deleted successfully!');
-    } catch (err) {
-      console.error('Error deleting file:', err);
-      const message = err?.response?.data?.message || 'Error deleting file';
-      alert(message);
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Confirmare Ștergere',
+      message: 'Ești sigur că vrei să ștergi fișierul încărcat? Poți încărca unul nou după aceea.',
+      onConfirm: async () => {
+        setConfirmDialog({ open: false, title: '', message: '', onConfirm: null });
+        try {
+          await apiService.deleteSignedFile(requestId);
+          const updatedRequests = await apiService.getStudentRequests(user.id);
+          setMyRequests(updatedRequests);
+          setMessage({ type: 'success', text: 'Fișierul a fost șters cu succes!' });
+        } catch (err) {
+          console.error('Error deleting file:', err);
+          const msg = err?.response?.data?.message || 'Eroare la ștergerea fișierului';
+          setMessage({ type: 'error', text: msg });
+        }
+      }
+    });
   };
 
   return (
     <div>
-      <AppHeader onMenuClick={() => setMenuOpen(!menuOpen)} title="Student Dashboard" user={user} />
+      <AppHeader onMenuClick={() => setMenuOpen(!menuOpen)} title="Panou Student" user={user} />
 
       <main className="dashboard-shell">
         <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} user={user} onLogout={onLogout} onNavigate={(key) => {
@@ -203,8 +207,38 @@ const StudentDashboard = ({ user }) => {
           if (key === 'dashboard') navigate('/student');
         }} />
         <section className="content">
-          <h1 className="login-title">Welcome back, {user.fullName?.split(' ')[0] || 'Student'}</h1>
-          <p className="login-subtitle">Here is an overview of your thesis application status.</p>
+          <h1 className="login-title">Bine ai revenit, {user.fullName || 'Student'}</h1>
+          <p className="login-subtitle">Aici este o prezentare generală a stării cererii tale de licență.</p>
+
+          {/* Mesaje */}
+          {message.text && (
+            <div style={{ 
+              padding: '12px 16px', 
+              marginBottom: '20px', 
+              borderRadius: '8px',
+              backgroundColor: message.type === 'error' ? '#f8d7da' : '#d4edda',
+              color: message.type === 'error' ? '#721c24' : '#155724',
+              border: `1px solid ${message.type === 'error' ? '#f5c6cb' : '#c3e6cb'}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span>{message.text}</span>
+              <button 
+                onClick={() => setMessage({ type: '', text: '' })} 
+                style={{ 
+                  border: 'none', 
+                  background: 'none', 
+                  cursor: 'pointer', 
+                  fontSize: '18px',
+                  color: message.type === 'error' ? '#721c24' : '#155724'
+                }}
+              >
+                ×
+              </button>
+            </div>
+          )}
+
           <StatusCards latestRequest={latestRequest} />
 
           {hasApprovedRequest ? (
@@ -215,6 +249,7 @@ const StudentDashboard = ({ user }) => {
               uploadingSignedForm={uploadingSignedForm}
               onUpload={handleUploadSignedForm}
               onDelete={handleDeleteSignedFile}
+              onMessage={setMessage}
             />
           ) : (
             <>
@@ -238,7 +273,62 @@ const StudentDashboard = ({ user }) => {
           )}
         </section>
       </main>
-    </div>
+      {/* Modal de Confirmare */}
+      {confirmDialog.open && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '12px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+          }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '18px' }}>{confirmDialog.title}</h3>
+            <p style={{ margin: '0 0 20px 0', color: '#666' }}>{confirmDialog.message}</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setConfirmDialog({ open: false, title: '', message: '', onConfirm: null })}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Anulează
+              </button>
+              <button
+                onClick={confirmDialog.onConfirm}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Șterge
+              </button>
+            </div>
+          </div>
+        </div>
+      )}    </div>
   );
 };
 

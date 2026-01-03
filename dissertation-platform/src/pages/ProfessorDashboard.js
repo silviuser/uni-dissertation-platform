@@ -281,7 +281,7 @@ const ProfessorDashboard = ({ user }) => {
 
   return (
     <div>
-      <AppHeader onMenuClick={() => setMenuOpen(!menuOpen)} title="Professor Dashboard" user={user} />
+      <AppHeader onMenuClick={() => setMenuOpen(!menuOpen)} title="Panou Principal" user={user} />
 
       <main className="dashboard-shell">
         <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} user={user} onLogout={onLogout} onNavigate={(key) => {
@@ -290,8 +290,8 @@ const ProfessorDashboard = ({ user }) => {
           if (key === 'dashboard') navigate('/professor');
         }} active={activeSidebarItem} />
         <section className="content">
-          <h1 className="login-title">Welcome back, {user.fullName?.split(' ')[0] || 'Professor'}</h1>
-          <p className="login-subtitle">Manage your thesis sessions and review student applications.</p>
+          <h1 className="login-title">Bine ai revenit, {user.fullName || 'Profesor'}</h1>
+          <p className="login-subtitle">Gestionează sesiunile de licență și revizuiește cererile studenților.</p>
 
           {/* Mesaje */}
           {message.text && (

@@ -82,22 +82,21 @@ const StudentProfile = ({ user }) => {
 
   return (
     <div>
-      <AppHeader onMenuClick={() => setMenuOpen(!menuOpen)} title="Edit Profile" user={user} />
+      <AppHeader onMenuClick={() => setMenuOpen(!menuOpen)} title="Editare Profil" user={user} />
       <main className="dashboard-shell">
         <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} user={user} onLogout={onLogout} onNavigate={onNavigate} active={'profile'} />
         <section className="content">
-          <div className="breadcrumbs"><span className="crumb">Home</span><span className="sep">/</span><span className="crumb">Profile</span></div>
-          <h1 className="login-title">Edit Profile</h1>
-          <p className="login-subtitle">Manage your personal and academic information for your thesis application.</p>
+          <div className="breadcrumbs"><span className="crumb">Acasă</span><span className="sep">/</span><span className="crumb">Profil</span></div>
+          <h1 className="login-title">Editare Profil</h1>
+          <p className="login-subtitle">Gestionează informațiile personale și academice pentru cererea de licență.</p>
 
           <div className="profile-card">
             <div className="profile-header">
               <div className="avatar-xl">{profile.fullName?.[0] || 'S'}</div>
               <div>
                 <div className="profile-title">{profile.fullName || 'Student'}</div>
-                <div className="profile-role">Computer Science Student</div>
+                <div className="profile-role">Student Informatică</div>
                 <div className="profile-id">ID: {user.id?.slice(0, 8)}</div>
-                <button className="link-btn" style={{ marginTop: 6 }} disabled>Change Profile Photo</button>
               </div>
             </div>
 
@@ -127,7 +126,7 @@ const StudentProfile = ({ user }) => {
               </div>
 
               <div className="form-item full">
-                <label>Institutional Email (Read-only)</label>
+                <label>Email Instituțional (Doar citire)</label>
                 <div className="input-wrap">
                   <input className="input" type="email" value={profile.email} readOnly />
                   <span className="input-lock">🔒</span>
@@ -136,8 +135,8 @@ const StudentProfile = ({ user }) => {
             </div>
 
             <div className="actions">
-              <button className="secondary-btn" onClick={handleCancel}>Cancel</button>
-              <button className="primary-btn" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Update Profile'}</button>
+              <button className="secondary-btn" onClick={handleCancel}>Anulează</button>
+              <button className="primary-btn" onClick={handleSave} disabled={saving}>{saving ? 'Se salvează...' : 'Actualizează Profil'}</button>
             </div>
           </div>
         </section>

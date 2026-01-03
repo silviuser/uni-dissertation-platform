@@ -9,7 +9,8 @@ const ApprovedUploadSection = ({
   setSignedFormFile,
   uploadingSignedForm,
   onUpload,
-  onDelete
+  onDelete,
+  onMessage
 }) => {
   const hasUploadedFile = !!approvedRequest?.studentFile;
 
@@ -23,7 +24,7 @@ const ApprovedUploadSection = ({
       });
       
       if (!response.ok) {
-        alert('Failed to download file');
+        onMessage?.({ type: 'error', text: 'Eroare la descărcarea fișierului' });
         return;
       }
       
@@ -31,14 +32,14 @@ const ApprovedUploadSection = ({
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `request-${approvedRequest.id.slice(0, 8)}.pdf`;
+      link.download = `cerere-${approvedRequest.id.slice(0, 8)}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('Download error:', error);
-      alert('Error downloading file');
+      onMessage?.({ type: 'error', text: 'Eroare la descărcarea fișierului' });
     }
   };
 
@@ -52,7 +53,7 @@ const ApprovedUploadSection = ({
       });
       
       if (!response.ok) {
-        alert('Failed to download file');
+        onMessage?.({ type: 'error', text: 'Eroare la descărcarea fișierului' });
         return;
       }
       
@@ -60,40 +61,40 @@ const ApprovedUploadSection = ({
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `signed-request-${approvedRequest.id.slice(0, 8)}.pdf`;
+      link.download = `cerere-semnata-${approvedRequest.id.slice(0, 8)}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('Download error:', error);
-      alert('Error downloading file');
+      onMessage?.({ type: 'error', text: 'Eroare la descărcarea fișierului' });
     }
   };
 
   return (
     <>
-      <h2 className="section-title">{approvedRequest?.teacherFile ? 'Download Signed Request' : 'Upload Signed Request'}</h2>
+      <h2 className="section-title">{approvedRequest?.teacherFile ? 'Descarcă Cererea Semnată' : 'Încarcă Cererea Semnată'}</h2>
       <Card>
-        <div className="title">Your approved placement</div>
+        <div className="title">Locul tău aprobat</div>
         <div className="meta" style={{ marginTop: 8 }}>
           {approvedRequest?.session?.universitySession?.name && approvedRequest?.session?.professor?.fullName
             ? `${approvedRequest.session.universitySession.name} - ${approvedRequest.session.professor.fullName}`
-            : `Request #${approvedRequest?.id?.slice(0, 6).toUpperCase()}`}
+            : `Cerere #${approvedRequest?.id?.slice(0, 6).toUpperCase()}`}
         </div>
         {approvedRequest?.session?.professor?.department && (
           <div className="meta" style={{ marginTop: 4 }}>
-            Department: {approvedRequest.session.professor.department}
+            Departament: {approvedRequest.session.professor.department}
           </div>
         )}
         {approvedRequest?.teacherFile ? (
           <div style={{ marginTop: 12 }}>
             <div className="meta">
-              <strong>✓ Signed Request Ready:</strong>
+              <strong>✓ Cererea Semnată este Gata:</strong>
             </div>
             <div style={{ marginTop: 8, padding: 12, backgroundColor: '#e8f5e9', borderRadius: 4 }}>
               <div className="meta" style={{ marginBottom: 8 }}>
-                ✓ Professor has signed and uploaded your request
+                ✓ Profesorul a semnat și încărcat cererea ta
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <Button
@@ -109,22 +110,22 @@ const ApprovedUploadSection = ({
                     border: 'none'
                   }}
                 >
-                  Download Signed File
+                  Descarcă Fișierul Semnat
                 </Button>
               </div>
               <div className="meta" style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
-                Your signed request is ready for download. The process is complete!
+                Cererea ta semnată este gata de descărcare. Procesul este complet!
               </div>
             </div>
           </div>
         ) : hasUploadedFile ? (
           <div style={{ marginTop: 12 }}>
             <div className="meta">
-              <strong>Uploaded File:</strong>
+              <strong>Fișier Încărcat:</strong>
             </div>
             <div style={{ marginTop: 8, padding: 12, backgroundColor: '#e7f3ff', borderRadius: 4 }}>
               <div className="meta" style={{ marginBottom: 8 }}>
-                📄 Request file uploaded
+                📄 Cererea a fost încărcată
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <Button
@@ -140,7 +141,7 @@ const ApprovedUploadSection = ({
                     border: 'none'
                   }}
                 >
-                  Download
+                  Descarcă
                 </Button>
                 <Button
                   onClick={() => onDelete(approvedRequest.id)}
@@ -154,18 +155,18 @@ const ApprovedUploadSection = ({
                     cursor: 'pointer'
                   }}
                 >
-                  Delete
+                  Șterge
                 </Button>
               </div>
               <div className="meta" style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
-                To replace this file, delete it first and then upload a new one.
+                Pentru a înlocui acest fișier, șterge-l mai întâi și apoi încarcă unul nou.
               </div>
             </div>
           </div>
         ) : (
           <div style={{ marginTop: 12 }}>
             <div className="meta">
-              Upload the signed request PDF so your professor can access it. Only PDF files are accepted.
+              Încarcă cererea semnată în format PDF pentru ca profesorul să o poată accesa. Doar fișierele PDF sunt acceptate.
             </div>
 
             <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -176,10 +177,10 @@ const ApprovedUploadSection = ({
               />
               <div style={{ display: 'flex', gap: 8 }}>
                 <Button onClick={onUpload} disabled={uploadingSignedForm}>
-                  {uploadingSignedForm ? 'Uploading...' : 'Upload PDF'}
+                  {uploadingSignedForm ? 'Se încarcă...' : 'Încarcă PDF'}
                 </Button>
                 {signedFormFile && (
-                  <div className="meta">Selected: {signedFormFile.name}</div>
+                  <div className="meta">Selectat: {signedFormFile.name}</div>
                 )}
               </div>
             </div>
