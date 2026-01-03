@@ -1,3 +1,4 @@
+
 import mysql from "mysql2/promise";
 import env from "dotenv";
 import db from "../dbConfig.js";
@@ -13,8 +14,10 @@ function Create_DB(){
 let conn;
 
     mysql.createConnection({
-    user : process.env.DB_USERNAME,
-    password : process.env.DB_PASSWORD
+        host: process.env.DB_HOST,    
+        user : process.env.DB_USERNAME,
+        password : process.env.DB_PASSWORD,
+        ssl: { rejectUnauthorized: false } // <--- IMPORTANT PENTRU AZURE
     })
     .then((connection) => {
     conn = connection
