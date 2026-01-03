@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Configurăm URL-ul de bază. Fiind setat proxy-ul în package.json, 
 // putem folosi rute relative (ex: /api).
-const API_URL = "dissertation-platform-api-gshqgae2c0fcc2ar.spaincentral-01.azurewebsites.net/api"; 
+const API_URL = "https://dissertation-platform-api-gshqgae2c0fcc2ar.spaincentral-01.azurewebsites.net/api"; 
 
 // Funcția de login
 const login = async (email, password, role) => {
